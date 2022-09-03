@@ -57,12 +57,13 @@ CREATE TABLE Venta(--Listo
 --Cambie esta tabla porque el precio y cantidad deberia poder cambiarse
 CREATE TABLE Productos(
     producto Producto not null,
-    precio money not null,
-    cantidad int not null --Unidades en stock
+    precio money not null
 );
 --CREATE TABLE Productos of Producto;--Listo
 CREATE TABLE Proveedores of Proveedor;--Listo
 --CREATE TABLE Autores of Autor;--Listo, esta tabla no se usa, siempre se meten los objetos autor en el array de producto.
+
+
 
 
 /* PRUEBAS
