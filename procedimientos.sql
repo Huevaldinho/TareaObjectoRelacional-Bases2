@@ -142,6 +142,130 @@ select * from Delete_Cliente(null,null);--Sirve, no hace nada solo muestra mensa
 select * from Delete_Cliente(1,null);--Sirve, seleciona el cliente que borra antes de borrarlo para mostarlo.
 --Sebastian
     --CRUD Productos y clientes
+
+--CREATE PRODUCTO
+CREATE OR REPLACE FUNCTION public.createproducto(
+	in_cantidad integer,
+	in_precio integer,
+	in_nombre character varying,
+	in_autores autor[],
+	in_descripcion character varying[],
+	in_categorias character varying[])
+    RETURNS character varying
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$ 
+	DECLARE productoIngresado character varying;
+	BEGIN
+	
+	if (in_cantidad is null OR
+		in_precio is null OR
+		in_nombre is null OR
+		in_autores is null OR
+		in_descripcion is null OR
+		in_categorias is null
+	   ) then
+		RAISE NOTICE 'Error, debe ingresar correctamente todos los datos.';
+	else
+		RAISE NOTICE 'ENTRO al else XDXDX';
+		INSERT INTO public.productos(producto)
+			SELECT(in_cantidad, in_precio, in_nombre, in_autores, in_descripcion, in_categorias)::producto
+			WHERE NOT EXISTS(SELECT 1 FROM productos where (producto).nombre = in_nombre); 
+			--se valida con el nombre del producto, es un poco ineficiente pero tampoco es problema, no se van a repetir.
+
+	end if;
+	
+	select (producto).nombre from Productos where (producto).nombre = in_nombre into productoIngresado;
+	RAISE NOTICE 'LO SELECCIONA EN PRODUCTOINGRESADO';
+	return productoIngresado;
+	END; 
+$BODY$;
+
+SELECT public.createproducto( --prueba sirve
+	5, 
+	1000, 
+	'El triangulo', 
+	array[('ganoza b', 'bejugod')::autor], 
+	array['muy pichudo'], 
+	array['rock','pop','clasica']
+);
+
+--READ PRODUCTO
+CREATE OR REPLACE FUNCTION public.readproducto( --:)
+	in_idproducto integer)
+    RETURNS Productos
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+	DECLARE
+		productoSeleccionado Productos;
+	BEGIN
+		SELECT Productos.idProducto, Productos.producto from Productos
+		where Productos.idProducto = in_idProducto into productoSeleccionado;
+		
+		RETURN productoSeleccionado;
+	END; 
+$BODY$;
+
+--UPDATE PRODUCT
+CREATE FUNCTION updateProducto(
+	in_idProducto integer,
+	in_cantidad integer,
+	in_precio integer,
+	in_nombre character varying,
+	in_autores autor[],
+	in_descripcion character varying[],
+	in_categorias character varying[])
+	RETURNS Productos AS $function_updateProducto$
+		DECLARE
+			productoActualizado Productos;
+		BEGIN
+			if (in_idProducto is null) then
+				RAISE NOTICE 'Error, no ingresó id del producto';
+				return null;
+			else
+				UPDATE Productos set
+					producto.cantidad = COALESCE(in_cantidad,(producto).cantidad),
+					producto.precio = COALESCE(in_precio,(producto).precio),
+					producto.nombre = COALESCE(in_nombre,(producto).nombre),
+					producto.autores = COALESCE(in_autores,(producto).autores),
+					producto.descripcion = COALESCE(in_descripcion,(producto).descripcion),
+					producto.categorias = COALESCE(in_categorias,(producto).categorias)
+				where Productos.idProducto = in_idProducto;
+				
+				SELECT Productos.idProducto, Productos.producto from Productos
+				where Productos.idProducto = in_idProducto into productoActualizado;
+			END IF;
+			RETURN productoActualizado;
+		END; $function_updateProducto$ LANGUAGE plpgsql;
+
+--si sirve, borré la prueba sin querer xd
+
+--DELETE PRODUCT
+CREATE OR REPLACE FUNCTION deleteProduct (in_idProduct int) 
+RETURNS Productos AS $function_deleteProduct$
+   DECLARE
+      productoEliminado Productos;
+   BEGIN
+        --Validar nulos
+        if (in_idProduct is null) then
+            raise notice 'Error, debe ingresar el id del producto para eliminarlo.';
+			return null;
+        else                                            --si el primer argumento es null retorna el segundo
+			SELECT Productos.idProducto, Productos.producto from Productos
+			where Productos.idProducto = in_idProduct into productoEliminado;
+            
+			DELETE from Productos where Productos.idProducto=in_idProduct;
+
+        end if;
+   RETURN productoEliminado;
+   END;$function_deleteProduct$ LANGUAGE plpgsql;
+
+select public.deleteproduct(10);
+
+
 --Juntos
     --Facturacion
     --Productos Vendidos
