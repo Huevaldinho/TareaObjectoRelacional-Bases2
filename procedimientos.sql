@@ -415,24 +415,20 @@ select * from Venta;
 
 
 
-    --Productos Vendidos
+--Productos Vendidos
 --Realice una consulta para ver los productos mas vendidos por cada empleado
 CREATE OR REPLACE FUNCTION VerProductosMasVendidos ( ) 
-RETURNS int AS $function_verProductoMasVendido$
+RETURNS TABLE(idEmpleado_ int,nombre_ varchar,sumaProducto bigint) AS $function_verProductoMasVendido$
    DECLARE
-      productoMasVendido Producto;
+      resultado int; 
    BEGIN
 		--Tabla temporal con idEmpleado y arreglo de productos--
-		CREATE TEMPORARY TABLE tmp_VentasXEmpleado(
-			idEmpleadoTemp int,
-			producto Producto
-		);
-		insert into tempVentasXEmpleado SELECT idEmpleado , unnest(productos) from Venta;
+		CREATE TEMPORARY TABLE tmp_VentasXEmpleado as SELECT idEmpleado , unnest(productos) as producto from Venta;
 		-- (idEmpleado int,producto producto)
-		select idEmpleado,producto.nombre,count(producto.nombre) as sumaProducto  from tempVentasXEmpleado
-		group by idEmpleado,producto.nombre order by sumaProducto desc limit 3;
-		 
-		return 1;
-        
-   RETURN 0;
+		
+		RETURN QUERY  select tmp_VentasXEmpleado.idEmpleado,(producto).nombre,count((producto).nombre) as sumaProducto  from 
+		tmp_VentasXEmpleado group by tmp_VentasXEmpleado.idEmpleado,(producto).nombre order by sumaProducto desc limit 3;
+		   
    END;$function_verProductoMasVendido$ LANGUAGE plpgsql;
+  
+SELECT verproductosmasvendidos();
