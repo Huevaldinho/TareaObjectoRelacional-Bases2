@@ -369,5 +369,61 @@ RETURNS Proveedores AS $function_deleteProveedor$
    END;$function_deleteProveedor$ LANGUAGE plpgsql;
 
 --Juntos
+
     --Facturacion
+CREATE OR REPLACE FUNCTION Facturar (idEmpleado_ int,idCliente_ int,productosComprados producto[]) 
+RETURNS int AS $function_facturar$
+	DECLARE idVentaRealizada int;
+   BEGIN
+		--Validar existe cliente y empleado
+		if (select idCliente from Cliente where idCliente=idCliente_) > 0 and
+		 	(select idEmpleado from Empleado where idEmpleado=idEmpleado_) > 0 and
+			(array_length(productosComprados, 1)>0) then
+
+			INSERT INTO Venta(idEmpleado,idCliente,costo,productos) VALUES 
+							(idEmpleado_,
+							idCliente_,
+							(SELECT sum((suma).precio) AS total FROM (SELECT unnest(productosComprados) AS suma) AS b)--costo
+							,productosComprados) RETURNING idVenta INTO idVentaRealizada;
+			RETURN idVentaRealizada;
+
+		else 
+			raise notice 'Error, no existe cliente o empleado con los parametros ingresados.';
+		end if;
+		
+   
+	RETURN 0;
+   END;$function_facturar$ LANGUAGE plpgsql;
+
+select * from empleado;
+insert into Empleado(datosPersonales) values (( 1 ,
+    'Pepito',
+   	array['El mas crack','crack segundo'],
+    TO_DATE('01/05/2000','DA/MM/YYYY'),
+    array['pepitoElMasCrack@gmail.com'],
+    array['8715371'])::persona);
+select * from Cliente;
+select * from Empleado;
+
+select public.Facturar(
+	1,
+	2,
+	array[(1,87431,'Let It Be',array[('John','Ringo')::autor],array['muy pichudo'],array['rock','salsa'])::producto]
+);
+--Retorna 12,11,9, no se que pasa
+select * from Venta;
+
+
+
     --Productos Vendidos
+CREATE OR REPLACE FUNCTION VerProductosMasVendidos ( ) 
+RETURNS Producto AS $function_verProductoMasVendido$
+   DECLARE
+      productoMasVendido Producto;
+   BEGIN
+		
+
+
+        
+   RETURN productoMasVendido;
+   END;$function_verProductoMasVendido$ LANGUAGE plpgsql;
